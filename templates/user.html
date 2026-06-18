@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block head %}
+	<title>用户: {{ nickname }} ({{ username }})</title>
+{% endblock %}
+{% block body %}
+	<h1>{{ nickname }}</h1>
+    <a href="/?r={{ redirect_to }}">回到搜索</a><br>
+	<span>用户名: {{ username }}</span><br>
+    <span>查看用户作品:</span><br>
+    <form action="/user/{{ uid }}" method="get">
+        <span>作品类型:</span>
+        {% if works_type != "illust" %}
+        <a href="/user/{{ uid }}?t=illust&n={{ page_number }}&tt={{ translate_title }}&r={{ redirect_to }}">单图</a>
+        {% else %}
+        <span>单图</span>
+        {% endif %}
+        {% if works_type != "manga" %}
+        <a href="/user/{{ uid }}?t=manga&n={{ page_number }}&tt={{ translate_title }}&r={{ redirect_to }}">漫画</a>
+        {% else %}
+        <span>漫画</span>
+        {% endif %}
+        {% if works_type != "novel" %}
+        <a href="/user/{{ uid }}?t=novel&n={{ page_number }}&tt={{ translate_title }}&r={{ redirect_to }}">小说</a>
+        {% else %}
+        <span>小说</span>
+        {% endif %}
+        <br><span>翻译标题(基于Gemini AI,较慢,可能失效):</span>
+        {% if translate_title != 1 %}
+        <a href="/user/{{ uid }}?t={{ works_type }}&n={{ page_number }}&tt=1&r={{ redirect_to }}">翻译</a>
+        {% else %}
+        <span>翻译</span>
+        {% endif %}
+        {% if translate_title != 0 %}
+        <a href="/user/{{ uid }}?t={{ works_type }}&n={{ page_number }}&tt=0&r={{ redirect_to }}">不翻译</a>
+        {% else %}
+        <span>不翻译</span>
+        {% endif %}
+        <br>
+        <input type="hidden" value="{{ translate_title }}" name="tt">
+        <input type="hidden" name="t" value="{{ works_type }}">
+        <input type="hidden" value="{{ redirect_to }}" name="r">
+        <label for="page-number">页码:</label>
+        <input type="number" min="1" name="n" placeholder="页码" id="page-number" value="{{ page_number }}">
+        <button type="submit">检索</button>
+    </form>
+	{% for item in works %}
+        {% if item["type"] == "novel" %}
+        <a href="/read/{{ item.id }}/0?r={{ redirect_to }}">{% if item.is_ai %}[AI生成]{% endif %}{% if item.restrict_lvl == 1 %}[R-18]{% endif %}{% if item.restrict_lvl == 2 %}[R-18G]{% endif %}{{ item.title }}</a><br>
+        {% else %}
+        <a href="/watch/{{ item.id }}/0?scale={% if works_type == 'illust' %}999{% else %}1{% endif %}&left=0&top=0&r={{ redirect_to }}">{% if item.is_ai %}[AI生成]{% endif %}{% if item.restrict_lvl == 1 %}[R-18]{% endif %}{% if item.restrict_lvl == 2 %}[R-18G]{% endif %}{{ item.title }}</a><br>
+        {% endif %}
+    {% endfor %}
+    {% if works | length == 0 %}
+    <span>无法看到任何内容?可能是因为页码过大，或是没有任何数据。</span><br>
+    {% endif %}
+    {% if page_number > 1 %}
+    <a href="/user/{{ uid }}?t={{ works_type }}&n={{ page_number - 1 }}&tt={{ translate_title }}&r={{ redirect_to }}">上一页</a>
+    {% endif %}
+    <a href="/user/{{ uid }}?t={{ works_type }}&n={{ page_number + 1 }}&tt={{ translate_title }}&r={{ redirect_to }}">下一页</a>
+{% endblock %}

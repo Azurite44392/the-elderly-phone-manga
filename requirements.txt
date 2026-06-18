@@ -1,0 +1,14 @@
+flask
+gunicorn
+gevent
+greenlet
+supervisor
+requests
+Brotli
+redis
+opencv-python-headless
+pixivpy3
+google-generativeai
+numpy
+protobuf
+typing_extensions

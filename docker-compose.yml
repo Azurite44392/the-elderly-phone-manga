@@ -1,0 +1,35 @@
+version: "3.9"
+
+services:
+  epm:
+    image: elderly_phone_manga:latest
+    container_name: epm
+    ports:
+      - "5025:5025"
+    environment:
+      REDIS_HOST: redis
+      PIXIV_ACCESS_TOKEN: ""
+      PIXIV_REFRESH_TOKEN: ""
+      PIXIV_EXPIRE_IN: ""
+      BAIDU_TRANSLATE_APPID: ""
+      BAIDU_TRANSLATE_SECRET: ""
+      GEMINI_API_KEY: ""
+    depends_on:
+      - redis
+    volumes:
+      - epm_log:/app/log
+      - epm_cache:/app/cache
+    restart: unless-stopped
+
+  redis:
+    image: redis:8.2.2
+    container_name: redis
+    command: [ "redis-server", "--appendonly", "yes" ]
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+volumes:
+  epm_log:
+  epm_cache:
+  redis_data:

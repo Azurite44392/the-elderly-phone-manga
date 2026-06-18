@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% block head %}
+	<title>老人机漫画站</title>
+{% endblock %}
+{% block body %}
+    <form action="/" method="get">
+        <span>搜索目标:</span>
+        {% if target_type != "illust" %}
+        <a href="/?q={{ keyword }}&i={{ page_index }}&t=illust&a={{ allow_ai }}&s={{ search_type }}&b={{ min_bookmarks }}&tt={{ translate_title }}&r1={{ allow_r18 }}&r2={{ allow_r18g }}">搜单图</a>
+        {% else %}
+        <span>搜单图</span>
+        {% endif %}
+        {% if target_type != "manga" %}
+        <a href="/?q={{ keyword }}&i={{ page_index }}&t=manga&a={{ allow_ai }}&s={{ search_type }}&b={{ min_bookmarks }}&tt={{ translate_title }}&r1={{ allow_r18 }}&r2={{ allow_r18g }}">搜漫画</a>
+        {% else %}
+        <span>搜漫画</span>
+        {% endif %}
+        {% if target_type != "novel" %}
+        <a href="/?q={{ keyword }}&i={{ page_index }}&t=novel&a={{ allow_ai }}&s={{ search_type }}&b={{ min_bookmarks }}&tt={{ translate_title }}&r1={{ allow_r18 }}&r2={{ allow_r18g }}">搜小说</a>
+        {% else %}
+        <span>搜小说</span>
+        {% endif %}
+        {% if target_type != "user" %}
+        <a href="/?q={{ keyword }}&i={{ page_index }}&t=user&a={{ allow_ai }}&s={{ search_type }}&b={{ min_bookmarks }}&tt={{ translate_title }}&r1={{ allow_r18 }}&r2={{ allow_r18g }}">搜用户</a>
+        {% else %}
+        <span>搜用户</span>
+        {% endif %}
+        {% if target_type != "illust_manga" %}
+        <a href="/?q={{ keyword }}&i={{ page_index }}&t=illust_manga&a={{ allow_ai }}&s={{ search_type }}&b={{ min_bookmarks }}&tt={{ translate_title }}&r1={{ allow_r18 }}&r2={{ allow_r18g }}">插画/漫画(旧版,支持收藏数)</a>
+        {% else %}
+        <span>插画/漫画(旧版,支持收藏数)</span>
+        {% endif %}
+        <br>
+        <span>搜索字段(仅对单图、漫画、小说、插画/漫画有效):</span>
+        {% if search_type != "partial_match_for_tags" %}
+        <a href="/?q={{ keyword }}&i={{ page_index }}&t={{ target_type }}&a={{ allow_ai }}&s=partial_match_for_tags&b={{ min_bookmarks }}&tt={{ translate_title }}&r1={{ allow_r18 }}&r2={{ allow_r18g }}">标签(部分一致)</a>
+        {% else %}
+        <span>标签(部分一致)</span>
+        {% endif %}
+        {% if search_type != "exact_match_for_tags" %}
+        <a href="/?q={{ keyword }}&i={{ page_index }}&t={{ target_type }}&a={{ allow_ai }}&s=exact_match_for_tags&b={{ min_bookmarks }}&tt={{ translate_title }}&r1={{ allow_r18 }}&r2={{ allow_r18g }}">标签(完全一致)</a>
+        {% else %}
+        <span>标签(完全一致)</span>
+        {% endif %}
+        {% if search_type != "title_and_caption" %}
+        <a href="/?q={{ keyword }}&i={{ page_index }}&t={{ target_type }}&a={{ allow_ai }}&s=title_and_caption&b={{ min_bookmarks }}&tt={{ translate_title }}&r1={{ allow_r18 }}&r2={{ allow_r18g }}">标题(仅对单图、漫画、插画/漫画有效)</a>
+        {% else %}
+        <span>标题(仅对单图、漫画、插画/漫画有效)</span>
+        {% endif %}
+        {% if search_type != "keyword" %}
+        <a href="/?q={{ keyword }}&i={{ page_index }}&t={{ target_type }}&a={{ allow_ai }}&s=keyword&b={{ min_bookmarks }}&tt={{ translate_title }}&r1={{ allow_r18 }}&r2={{ allow_r18g }}">正文(仅对小说有效)</a>
+        {% else %}
+        <span>正文(仅对小说有效)</span>
+        {% endif %}
+        <br>
+        <input type="hidden" name="t" value="{{ target_type }}">
+        <input type="hidden" name="a" value="{{ allow_ai }}">
+        <input type="hidden" name="r1" value="{{ allow_r18 }}">
+        <input type="hidden" name="r2" value="{{ allow_r18g }}">
+        <input type="hidden" name="s" value="{{ search_type }}">
+        <label for="query">搜索:</label>
+        <input type="text" name="q" id="query" placeholder="关键词" value="{{ keyword }}" required><br>
+        <span>AI作品(仅对单图、漫画、插画/漫画有效):</span>
+        {% if allow_ai != "1" %}
+        <a href="/?q={{ keyword }}&i={{ page_index }}&t={{ target_type }}&a=1&s={{ search_type }}&b={{ min_bookmarks }}&tt={{ translate_title }}&r1={{ allow_r18 }}&r2={{ allow_r18g }}">不显示</a>
+        {% else %}
+        <span>不显示</span>
+        {% endif %}
+        {% if allow_ai != "0" %}
+        <a href="/?q={{ keyword }}&i={{ page_index }}&t={{ target_type }}&a=0&s={{ search_type }}&b={{ min_bookmarks }}&tt={{ translate_title }}&r1={{ allow_r18 }}&r2={{ allow_r18g }}">显示</a>
+        {% else %}
+        <span>显示</span>
+        {% endif %}
+        <br>
+        <span>R-18作品(仅对单图、漫画、插画/漫画有效):</span>
+        {% if allow_r18 != 0 %}
+        <a href="/?q={{ keyword }}&i={{ page_index }}&t={{ target_type }}&a={{ allow_ai }}&s={{ search_type }}&b={{ min_bookmarks }}&tt={{ translate_title }}&r1=0&r2={{ allow_r18g }}">不显示</a>
+        {% else %}
+        <span>不显示</span>
+        {% endif %}
+        {% if allow_r18 != 1 %}
+        <a href="/?q={{ keyword }}&i={{ page_index }}&t={{ target_type }}&a={{ allow_ai }}&s={{ search_type }}&b={{ min_bookmarks }}&tt={{ translate_title }}&r1=1&r2={{ allow_r18g }}">显示</a>
+        {% else %}
+        <span>显示</span>
+        {% endif %}
+        <br>
+        <span>R-18G作品(仅对单图、漫画、插画/漫画有效):</span>
+        {% if allow_r18g != 0 %}
+        <a href="/?q={{ keyword }}&i={{ page_index }}&t={{ target_type }}&a={{ allow_ai }}&s={{ search_type }}&b={{ min_bookmarks }}&tt={{ translate_title }}&r1={{ allow_r18 }}&r2=0">不显示</a>
+        {% else %}
+        <span>不显示</span>
+        {% endif %}
+        {% if allow_r18g != 1 %}
+        <a href="/?q={{ keyword }}&i={{ page_index }}&t={{ target_type }}&a={{ allow_ai }}&s={{ search_type }}&b={{ min_bookmarks }}&tt={{ translate_title }}&r1={{ allow_r18 }}&r2=1">显示</a>
+        {% else %}
+        <span>显示</span>
+        {% endif %}
+        <br>
+        <label for="min-bookmarks">最小收藏数(仅对小说、插画/漫画有效):</label>
+        <input type="number" min="0" name="b" placeholder="最小收藏数" id="min-bookmarks" value="{{ min_bookmarks }}">
+        <br><span>收藏数小于最小收藏数的作品不会显示。</span>
+        <br><span>翻译标题(基于Gemini AI,较慢,可能失效):</span>
+        {% if translate_title != 1 %}
+        <a href="/?q={{ keyword }}&i={{ page_index }}&t={{ target_type }}&a={{ allow_ai }}&s={{ search_type }}&b={{ min_bookmarks }}&tt=1&r1={{ allow_r18 }}&r2={{ allow_r18g }}">翻译</a>
+        {% else %}
+        <span>翻译</span>
+        {% endif %}
+        {% if translate_title != 0 %}
+        <a href="/?q={{ keyword }}&i={{ page_index }}&t={{ target_type }}&a={{ allow_ai }}&s={{ search_type }}&b={{ min_bookmarks }}&tt=0&r1={{ allow_r18 }}&r2={{ allow_r18g }}">不翻译</a>
+        {% else %}
+        <span>不翻译</span>
+        {% endif %}
+        <br>
+        <input type="hidden" value="{{ translate_title }}" name="tt">
+        <label for="page-index">页码:</label>
+        <input type="number" min="1" name="n" placeholder="页码" id="page-index" value="{{ page_index + 1 }}">
+        <button type="submit">搜索</button><br>
+    </form>
+    {% if target_type == "illust" %}
+    {% for item in items %}
+    <a href="/watch/{{ item.id }}/0?scale=999&left=0&top=0&r={{ redirect_to }}">{% if item.is_ai %}[AI生成]{% endif %}{% if item.restrict_lvl == 1 %}[R-18]{% endif %}{% if item.restrict_lvl == 2 %}[R-18G]{% endif %}{{ item.title }} by {{ item.author }}</a><br>
+    {% endfor %}
+    {% endif %}
+    {% if target_type == "manga" %}
+    {% for item in items %}
+    <a href="/watch/{{ item.id }}/0?scale={{ (item.max_scale / 2) | floor }}&left=0&top=0&r={{ redirect_to }}">{% if item.is_ai %}[AI生成]{% endif %}{% if item.restrict_lvl == 1 %}[R-18]{% endif %}{% if item.restrict_lvl == 2 %}[R-18G]{% endif %}{{ item.title }} by {{ item.author }}</a><br>
+    {% endfor %}
+    {% endif %}
+    {% if target_type == "novel" %}
+    {% for item in items %}
+    <a href="/read/{{ item.id }}/0?r={{ redirect_to }}">{% if item.is_ai %}[AI生成]{% endif %}{% if item.restrict_lvl == 1 %}[R-18]{% endif %}{% if item.restrict_lvl == 2 %}[R-18G]{% endif %}{{ item.title }} by {{ item.author }} [{{ item.bookmarks }}收藏]</a><br>
+    {% endfor %}
+    {% endif %}
+    {% if target_type == "user" %}
+    {% for item in items %}
+    <a href="/user/{{ item.id }}?r={{ redirect_to }}">{{ item.nickname }} ({{ item.username }})</a><br>
+    {% endfor %}
+    {% endif %}
+    {% if target_type == "illust_manga" %}
+    {% for item in items %}
+    <a href="/watch/{{ item.id }}/0?scale={% if item.type == 'manga' %}{{ (item.max_scale / 2) | floor }}{% else %}999{% endif %}&left=0&top=0&r={{ redirect_to }}">{% if item.type == "manga" %}[漫画] {% endif %}{% if item.is_ai %}[AI生成] {% endif %}{% if item.restrict_lvl == 1 %}[R-18]{% endif %}{% if item.restrict_lvl == 2 %}[R-18G]{% endif %}{{ item.title }} by {{ item.author }} [{{ item.bookmarks }}收藏]{% if item.pages > 1 %} [{{ item.pages }}张图]{% endif %}</a><br>
+    {% endfor %}
+    {% endif %}
+    {% if items | length == 0 and keyword != "" %}
+    <span>无法看到任何内容?可能是因为页码过大、筛选条件过于严格，或是没有任何数据。</span><br>
+    {% endif %}
+    {% if keyword and page_index > 0 %}
+    <a href="/?q={{ keyword }}&i={{ page_index - 1 }}&t={{ target_type }}&a={{ allow_ai }}&s={{ search_type }}&b={{ min_bookmarks }}&tt={{ translate_title }}&r1={{ allow_r18 }}&r2={{ allow_r18g }}">上一页</a>
+    {% endif %}
+    {% if keyword %}
+    <a href="/?q={{ keyword }}&i={{ page_index + 1 }}&t={{ target_type }}&a={{ allow_ai }}&s={{ search_type }}&b={{ min_bookmarks }}&tt={{ translate_title }}&r1={{ allow_r18 }}&r2={{ allow_r18g }}">下一页</a>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% block head %}
+	<title>查看漫画</title>
+{% endblock %}
+{% block body %}
+	<img src="/get_image/{{ manga_id }}/{{ page_index }}?scale={{ scale }}&left={{ left }}&top={{ top }}&require_trans={{ require_trans }}" alt="漫画图片">
+    <br>
+    {% if left > 0 %}
+    <a href="/watch/{{ manga_id }}/{{ page_index }}?scale={{ scale }}&left={{ left - 0.5 }}&top={{ top }}&require_trans={{ require_trans }}&r={{ redirect_to }}">左</a>
+    {% else %}
+    <span>左</span>
+    {% endif %}
+    {% if left < max_left %}
+    <a href="/watch/{{ manga_id }}/{{ page_index }}?scale={{ scale }}&left={{ left + 0.5 }}&top={{ top }}&require_trans={{ require_trans }}&r={{ redirect_to }}">右</a>
+    {% else %}
+    <span>右</span>
+    {% endif %}
+    {% if top > 0 %}
+    <a href="/watch/{{ manga_id }}/{{ page_index }}?scale={{ scale }}&left={{ left }}&top={{ top - 0.5 }}&require_trans={{ require_trans }}&r={{ redirect_to }}">上</a>
+    {% else %}
+    <span>上</span>
+    {% endif %}
+    {% if top < max_top %}
+    <a href="/watch/{{ manga_id }}/{{ page_index }}?scale={{ scale }}&left={{ left }}&top={{ top + 0.5 }}&require_trans={{ require_trans }}&r={{ redirect_to }}">下</a>
+    {% else %}
+    <span>下</span>
+    {% endif %}
+    {% if left != 0 or top != 0 %}
+    <a href="/watch/{{ manga_id }}/{{ page_index }}?scale={{ scale }}&left=0&top=0&require_trans={{ require_trans }}&r={{ redirect_to }}">左上角</a>
+    {% else %}
+    <span>左上角</span>
+    {% endif %}
+    {% if scale != 1 %}
+    <a href="/watch/{{ manga_id }}/{{ page_index }}?scale=1&left={{ (left + 0.5) * scale - 0.5 }}&top={{ (top + 0.5) * scale - 0.5 }}&require_trans={{ require_trans }}&r={{ redirect_to }}">最大</a>
+    {% else %}
+    <span>最大</span>
+    {% endif %}
+    {% if scale != max_scale %}
+    <a href="/watch/{{ manga_id }}/{{ page_index }}?scale={{ max_scale }}&left={{ (left + 0.5) * scale / max_scale - 0.5 }}&top={{ (top + 0.5) * scale / max_scale - 0.5 }}&require_trans={{ require_trans }}&r={{ redirect_to }}">最小</a>
+    {% else %}
+    <span>最小</span>
+    {% endif %}
+    {% if scale > 1 %}
+    <a href="/watch/{{ manga_id }}/{{ page_index }}?scale={{ scale - 1 }}&left={{ (left + 0.5) * scale / (scale - 1) - 0.5 }}&top={{ (top + 0.5) * scale / (scale - 1) - 0.5 }}&require_trans={{ require_trans }}&r={{ redirect_to }}">放大</a>
+    {% else %}
+    <span>放大</span>
+    {% endif %}
+    {% if scale < max_scale %}
+    <a href="/watch/{{ manga_id }}/{{ page_index }}?scale={{ scale + 1 }}&left={{ (left + 0.5) * scale / (scale + 1) - 0.5 }}&top={{ (top + 0.5) * scale / (scale + 1) - 0.5 }}&require_trans={{ require_trans }}&r={{ redirect_to }}">缩小</a>
+    {% else %}
+    <span>缩小</span>
+    {% endif %}
+    {% if page_index < max_index %}
+    <a href="/watch/{{ manga_id }}/{{ page_index + 1 }}?scale={{ scale }}&left={{ left }}&top={{ top }}&require_trans={{ require_trans }}&r={{ redirect_to }}">下一张</a>
+    {% else %}
+    <span>下一张</span>
+    {% endif %}
+    {% if page_index > 0 %}
+    <a href="/watch/{{ manga_id }}/{{ page_index - 1 }}?scale={{ scale }}&left={{ left }}&top={{ top }}&require_trans={{ require_trans }}&r={{ redirect_to }}">上一张</a>
+    {% else %}
+    <span>上一张</span>
+    {% endif %}
+    {% if left > 0 %}
+    <a href="/watch/{{ manga_id }}/{{ page_index }}?scale={{ scale }}&left={{ left - 0.1 }}&top={{ top }}&require_trans={{ require_trans }}&r={{ redirect_to }}">微左</a>
+    {% else %}
+    <span>微左</span>
+    {% endif %}
+    {% if left < max_left %}
+    <a href="/watch/{{ manga_id }}/{{ page_index }}?scale={{ scale }}&left={{ left + 0.1 }}&top={{ top }}&require_trans={{ require_trans }}&r={{ redirect_to }}">微右</a>
+    {% else %}
+    <span>微右</span>
+    {% endif %}
+    {% if top > 0 %}
+    <a href="/watch/{{ manga_id }}/{{ page_index }}?scale={{ scale }}&left={{ left }}&top={{ top - 0.1 }}&require_trans={{ require_trans }}&r={{ redirect_to }}">微上</a>
+    {% else %}
+    <span>微上</span>
+    {% endif %}
+    {% if top < max_top %}
+    <a href="/watch/{{ manga_id }}/{{ page_index }}?scale={{ scale }}&left={{ left }}&top={{ top + 0.1 }}&require_trans={{ require_trans }}&r={{ redirect_to }}">微下</a>
+    {% else %}
+    <span>微下</span>
+    {% endif %}
+    <a href="/?r={{ redirect_to }}">返回搜索</a>
+    {% if require_trans == 0 %}
+    <a href="/watch/{{ manga_id }}/{{ page_index }}?scale={{ scale }}&left={{ left }}&top={{ top }}&require_trans=1&r={{ redirect_to }}">翻译</a>
+    {% else %}
+    <a href="/watch/{{ manga_id }}/{{ page_index }}?scale={{ scale }}&left={{ left }}&top={{ top }}&require_trans=0&r={{ redirect_to }}">原图</a>
+    {% endif %}
+    <br>
+    <span>作者: <a href="/user/{{ author.id }}">{{ author.name }}</a></span>
+    <br>
+    <span>图片标签: {% for tag in tags %}<a href="/?q={{ tag.name }}">#{{ tag.name }}{% if tag.translated_name %}({{ tag.translated_name }}){% endif %}</a> {% endfor %}</span>
+{% endblock %}

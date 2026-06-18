@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block head %}
+	<title>查看小说</title>
+{% endblock %}
+{% block body %}
+	<h1>{{ title }}</h1>
+	<span>作者: <a href="/user/{{ author.id }}">{{ author.name }}</a></span><br>
+	<span>小说标签: {% for tag in tags %}<a href="/?q={{ tag.name }}&t=novel">#{{ tag.name }}{% if tag.translated_name %}({{ tag.translated_name }}){% endif %}</a> {% endfor %}</span><br>
+	<a href="/?r={{ redirect_to }}">回到搜索</a><br>
+	{% if require_trans != 0 %}
+	<a href="/read/{{ novel_id }}/{{ page_index }}?require_trans=0&r={{ redirect_to }}">原文</a>
+	{% else %}
+	<span>原文</span>
+	{% endif %}
+	{% if require_trans != 1 %}
+	<a href="/read/{{ novel_id }}/{{ page_index }}?require_trans=1&r={{ redirect_to }}">翻译(百度翻译,快速但质量一般)</a>
+	{% else %}
+	<span>翻译(百度翻译,快速但质量一般)</span>
+	{% endif %}
+	{% if require_trans != 2 %}
+	<a href="/read/{{ novel_id }}/{{ page_index }}?require_trans=2&r={{ redirect_to }}">翻译(Gemini AI翻译,较慢但质量较高,可能失效)</a>
+	{% else %}
+	<span>翻译(Gemini AI翻译,较慢但质量较高,可能失效)</span>
+	{% endif %}
+	{% for text in texts %}
+	<p>{{ text }}</p>
+    {% endfor %}
+	{% if page_index > 0 %}
+	<a href="/read/{{ novel_id }}/{{ page_index - 1 }}?require_trans={{ require_trans }}&r={{ redirect_to }}">上一页</a>
+	{% else %}
+	<span>上一页</span>
+	{% endif %}
+	{% if page_index < page_amount - 1 %}
+	<a href="/read/{{ novel_id }}/{{ page_index + 1 }}?require_trans={{ require_trans }}&r={{ redirect_to }}">下一页</a>
+	{% else %}
+	<span>下一页</span>
+	{% endif %}
+{% endblock %}
