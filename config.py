@@ -17,6 +17,26 @@ NETWORK_PROXIES = {}  # deprecated
 
 IMAGE_CACHE_DIR = "./cache/"  # 斜杠结尾
 SEARCH_PAGE_AMOUNT_PER_PAGE = int(os.getenv("EPM_SEARCH_PAGE_AMOUNT_PER_PAGE", "5"))
+BLOCKED_KEYWORDS_FILE = os.getenv("EPM_BLOCKED_KEYWORDS_FILE", "./blocked_keywords.txt")
+
+
+def load_blocked_keywords():
+    keywords = []
+    if os.path.isfile(BLOCKED_KEYWORDS_FILE):
+        with open(BLOCKED_KEYWORDS_FILE, "r", encoding="utf-8") as f:
+            for line in f:
+                keyword = line.strip()
+                if keyword and not keyword.startswith("#"):
+                    keywords.append(keyword.lower())
+    keywords += [
+        keyword.strip().lower()
+        for keyword in os.getenv("EPM_BLOCKED_KEYWORDS", "").split(",")
+        if keyword.strip()
+    ]
+    return list(dict.fromkeys(keywords))
+
+
+BLOCKED_KEYWORDS = load_blocked_keywords()
 
 # Redis 配置
 REDIS_HOST = os.getenv("REDIS_HOST", "127.0.0.1")
@@ -38,13 +58,5 @@ PIXIV_SENTRY_TRACE = os.getenv("PIXIV_SENTRY_TRACE", "")
 BAIDU_TRANSLATE_APPID = os.getenv("BAIDU_TRANSLATE_APPID", "")
 BAIDU_TRANSLATE_SECRET = os.getenv("BAIDU_TRANSLATE_SECRET", "")
 
-# AI 翻译配置
-AI_TRANSLATOR = os.getenv("AI_TRANSLATOR", "gemini")  # gemini/cloudflare
-
 # Gemini 翻译配置
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-
-# Cloudflare Workers AI 翻译配置
-CF_ACCOUNT_ID = os.getenv("CF_ACCOUNT_ID", "")
-CF_API_TOKEN = os.getenv("CF_API_TOKEN", "")
-CF_MODEL = os.getenv("CF_MODEL", "@cf/qwen/qwen2.5-coder-32b-instruct")

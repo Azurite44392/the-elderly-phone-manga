@@ -3,16 +3,15 @@ from pixiv_token_manager import get_refresh_token
 import requests
 import brotli
 import os
-from config import IMAGE_CACHE_DIR, PIXIV_WEB_COOKIES, PIXIV_WEB_UID, PIXIV_SENTRY_TRACE, SEARCH_PAGE_AMOUNT_PER_PAGE, WINDOW_WIDTH, WINDOW_HEIGHT
+from config import IMAGE_CACHE_DIR, PIXIV_WEB_COOKIES, PIXIV_WEB_UID, PIXIV_SENTRY_TRACE, SEARCH_PAGE_AMOUNT_PER_PAGE, WINDOW_WIDTH, WINDOW_HEIGHT, load_blocked_keywords
 import redis_api
 import json
 from image_cutter import get_image_size, resize_to_max_size_and_compress
 import hashlib
 from math import ceil
-import baidu_translate_api
-from translator_api import translate_texts, translate_text
+from baidu_translate_api import translate_image, translate_text
+from gemini_translate_api import gemini_translate_text, gemini_translate_texts
 import traceback
-import sys
 
 
 web_req_headers = {"Accept": "application/json",
@@ -55,6 +54,41 @@ def download_image(url: str):
 def calculate_max_scale(image_width: int, image_height: int):
     max_scale = ceil(max(image_width / WINDOW_WIDTH, image_height / WINDOW_HEIGHT))
     return max_scale
+
+
+def tag_names(tags):
+    names = []
+    if not tags:
+        return names
+    for tag in tags:
+        if isinstance(tag, str):
+            names.append(tag)
+        elif isinstance(tag, dict):
+            for key in ["name", "tag", "translated_name", "translation"]:
+                value = tag.get(key)
+                if value:
+                    names.append(str(value))
+    return names
+
+
+def contains_blocked_keyword(text: str, blocked_keywords: list[str]):
+    if not text:
+        return False
+    text = str(text).lower()
+    return any(keyword in text for keyword in blocked_keywords)
+
+
+def is_blocked_search_item(item: dict, blocked_keywords: list[str]):
+    if not blocked_keywords:
+        return False
+    if contains_blocked_keyword(item.get("title", ""), blocked_keywords):
+        return True
+    return any(contains_blocked_keyword(tag, blocked_keywords) for tag in tag_names(item.get("tags", [])))
+
+
+def filter_blocked_search_items(items: list[dict]):
+    blocked_keywords = load_blocked_keywords()
+    return [item for item in items if not is_blocked_search_item(item, blocked_keywords)]
 
 
 def get_illust_urls(illust_id: int):
@@ -118,7 +152,7 @@ def download_illust(illust_id: int, page_index: int, require_trans: int):
         return image_bytes
     origin_image = _download_illust(illust_id, page_index)
     origin_image = resize_to_max_size_and_compress(origin_image, 4096, 95)
-    result, errcode, data = baidu_translate_api.translate_image("auto", "zh", origin_image, "jpg")
+    result, errcode, data = translate_image("auto", "zh", origin_image, "jpg")
     if not result:
         print(f"Failed to translate image. error code: {errcode}")
         return None
@@ -142,7 +176,7 @@ def search_artwork(offset_s: int, artwork_type: str, keyword: str, page_size: in
 
 
 def search_illust(keyword: str, page_index: int, allow_ai: str = "0", search_type: str = "partial_match_for_tags", min_bookmarks: int = 0, allow_r18: int = 0, allow_r18g: int = 0):
-    cache_key = get_md5(f"q={keyword}&i={page_index}&a={allow_ai}&t={search_type}&a=illust_manga")
+    cache_key = get_md5(f"v=2&q={keyword}&i={page_index}&a={allow_ai}&t={search_type}&a=illust_manga")
     db_session = redis_api.get_session()
     data = db_session.get(f"pixiv_search_cache_{cache_key}")
     if data is None:
@@ -159,7 +193,7 @@ def search_illust(keyword: str, page_index: int, allow_ai: str = "0", search_typ
             result = [{"title": item["title"], "author": item["user"]["name"], "is_ai": item["illust_ai_type"] == 2,
                        "id": item["id"], "type": item["type"], "bookmarks": item['total_bookmarks'],
                        "pages": item["page_count"], "max_scale": calculate_max_scale(item["width"], item["height"]),
-                       "restrict_lvl": item["x_restrict"]} for item in rsp["illusts"]]
+                       "restrict_lvl": item["x_restrict"], "tags": item.get("tags", [])} for item in rsp["illusts"]]
             all_results += result
         db_session.set(f"pixiv_search_cache_{cache_key}", json.dumps(all_results))
     else:
@@ -169,6 +203,7 @@ def search_illust(keyword: str, page_index: int, allow_ai: str = "0", search_typ
     all_results = [item for item in all_results
                    if item['bookmarks'] >= min_bookmarks and (allow_r18 or item["restrict_lvl"] != 1) and (allow_r18g or item["restrict_lvl"] != 2)
                    ]
+    all_results = filter_blocked_search_items(all_results)
     all_results.sort(key=lambda x: x['bookmarks'], reverse=True)
     return all_results
 
@@ -200,10 +235,11 @@ def web_search_work(artwork_type: str, keyword: str, page_index: int, search_typ
     data = rsp["body"][artwork_type]["data"]
     results = [{"title": item["title"], "author": item["userName"], "is_ai": item["aiType"] == 2,
                 "id": item["id"], "max_scale": calculate_max_scale(item["width"], item["height"]),
-                "restrict_lvl": item["xRestrict"]} for item in data]
+                "restrict_lvl": item["xRestrict"], "tags": item.get("tags", [])} for item in data]
     results = [item for item in results
                if (allow_r18 or item["restrict_lvl"] != 1) and (allow_r18g or item["restrict_lvl"] != 2)
                ]
+    results = filter_blocked_search_items(results)
     return results
 
 
@@ -220,7 +256,7 @@ def search_user(keyword: str, page_index: int):
 
 
 def search_novel(keyword: str, page_index: int, search_type: str = "partial_match_for_tags", allow_ai: str = "1", min_bookmarks: int = 0, allow_r18: int = 0, allow_r18g: int = 0):
-    cache_key = get_md5(f"q={keyword}&i={page_index}&a={allow_ai}&t={search_type}&a=novel")
+    cache_key = get_md5(f"v=2&q={keyword}&i={page_index}&a={allow_ai}&t={search_type}&a=novel")
     db_session = redis_api.get_session()
     data = db_session.get(f"pixiv_search_cache_{cache_key}")
     if data is None:
@@ -236,7 +272,7 @@ def search_novel(keyword: str, page_index: int, search_type: str = "partial_matc
             results = [{"title": item["title"], "author": item["user"]["name"],
                         "is_ai": item["novel_ai_type"] == 2, "id": item["id"],
                         "bookmarks": item['total_bookmarks'],
-                        "restrict_lvl": item["x_restrict"]} for item in rsp["novels"]]
+                        "restrict_lvl": item["x_restrict"], "tags": item.get("tags", [])} for item in rsp["novels"]]
             all_results += results
         db_session.set(f"pixiv_search_cache_{cache_key}", json.dumps(all_results))
     else:
@@ -246,6 +282,7 @@ def search_novel(keyword: str, page_index: int, search_type: str = "partial_matc
     all_results = [item for item in all_results
                    if item["bookmarks"] >= min_bookmarks and (allow_r18 or item["restrict_lvl"] != 1) and (allow_r18g or item["restrict_lvl"] != 2)
                    ]
+    all_results = filter_blocked_search_items(all_results)
     all_results.sort(key=lambda x: x["bookmarks"], reverse=True)
     return all_results
 
@@ -302,21 +339,17 @@ def novel_text(work_id: int, page_index: int, require_trans: int):
     if data is None:
         origin_text, page_amount = _novel_text(work_id, page_index)
         if require_trans == 1:
-            try:
-                result, errcode, translated = baidu_translate_api.translate_text("auto", "zh", origin_text)
-            except:
-                print(f"无法使用百度翻译来翻译小说文本:{traceback.format_exc()}", file=sys.stderr)
-                return "错误:无法翻译文本", 1
+            result, errcode, translated = translate_text("auto", "zh", origin_text)
             if not result:
-                print(f"无法使用百度翻译来翻译小说文本，错误代码:{errcode}", file=sys.stderr)
+                print(f"Failed to translate text. error code:{errcode}")
                 db_session.close()
                 return "错误:无法翻译文本", 1
             page_info = {"text": translated["dst"], "page_amount": page_amount}
         elif require_trans == 2:
             try:
-                result = translate_text(origin_text)
+                result = gemini_translate_text(origin_text)
             except:
-                print(f"无法使用 AI 翻译小说文本{traceback.format_exc()}", file=sys.stderr)
+                print("Gemini failed to translate text.", traceback.format_exc())
                 db_session.close()
                 return "错误:无法翻译文本", 1
             page_info = {"text": result["translated_text"], "page_amount": page_amount}
@@ -343,21 +376,17 @@ def translate_single_title(title: str, require_trans: int):
     data = db_session.get(cache_key)
     if data is None:
         if require_trans == 1:
-            try:
-                result, errcode, info = baidu_translate_api.translate_text("auto", "zh", title)
-            except:
-                print(f"无法使用百度翻译来翻译单个标题:{traceback.format_exc()}", file=sys.stderr)
-                return {"src_lang": "zh", "dst": "标题翻译失败"}
+            result, errcode, info = translate_text("auto", "zh", title)
             if not result:
                 db_session.close()
-                print(f"无法使用百度翻译来翻译单个标题，错误码:{errcode}", file=sys.stderr)
+                print(f"Failed to translate text. error code:{errcode}")
                 return {"src_lang": "zh", "dst": "标题翻译失败"}
         elif require_trans == 2:
             try:
-                result = translate_text(title)
+                result = gemini_translate_text(title)
             except:
                 db_session.close()
-                print(f"无法使用 AI 翻译单个标题:{traceback.format_exc()}", file=sys.stderr)
+                print(f"Gemini failed to translate text.", traceback.format_exc())
                 return {"src_lang": "zh", "dst": "标题翻译失败"}
             info = {"src_lang": result.get("source_language"), "dst": result["translated_text"]}
         else:
@@ -387,9 +416,8 @@ def gemini_translate_titles(titles: list[str]):
             translation_map[title_md5] = data["dst"]
     if len(require_trans) > 0:
         try:
-            results = translate_texts(require_trans)
+            results = gemini_translate_texts(require_trans)
         except:
-            print(f"无法使用 AI 翻译多个标题:{traceback.format_exc()}", file=sys.stderr)
             results = [{"source_language": "", "translated_text": "标题翻译失败"} for _ in range(len(require_trans))]
     else:
         results = []
