@@ -99,7 +99,7 @@
         <label for="min-bookmarks">最小收藏数(仅对小说、插画/漫画有效):</label>
         <input type="number" min="0" name="b" placeholder="最小收藏数" id="min-bookmarks" value="{{ min_bookmarks }}">
         <br><span>收藏数小于最小收藏数的作品不会显示。</span>
-        <br><span>翻译标题(基于Gemini AI,较慢,可能失效):</span>
+        <br><span>翻译标题(基于AI,较慢,可能失效):</span>
         {% if translate_title != 1 %}
         <a href="/?q={{ keyword }}&i={{ page_index }}&t={{ target_type }}&a={{ allow_ai }}&s={{ search_type }}&b={{ min_bookmarks }}&tt=1&r1={{ allow_r18 }}&r2={{ allow_r18g }}">翻译</a>
         {% else %}

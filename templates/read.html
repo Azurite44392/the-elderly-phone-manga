@@ -18,9 +18,9 @@
 	<span>翻译(百度翻译,快速但质量一般)</span>
 	{% endif %}
 	{% if require_trans != 2 %}
-	<a href="/read/{{ novel_id }}/{{ page_index }}?require_trans=2&r={{ redirect_to }}">翻译(Gemini AI翻译,较慢但质量较高,可能失效)</a>
+	<a href="/read/{{ novel_id }}/{{ page_index }}?require_trans=2&r={{ redirect_to }}">翻译(AI翻译,较慢但质量较高,可能失效)</a>
 	{% else %}
-	<span>翻译(Gemini AI翻译,较慢但质量较高,可能失效)</span>
+	<span>翻译(AI翻译,较慢但质量较高,可能失效)</span>
 	{% endif %}
 	{% for text in texts %}
 	<p>{{ text }}</p>

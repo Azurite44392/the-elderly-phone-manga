@@ -10,7 +10,7 @@ from image_cutter import get_image_size, resize_to_max_size_and_compress
 import hashlib
 from math import ceil
 from baidu_translate_api import translate_image, translate_text
-from gemini_translate_api import gemini_translate_text, gemini_translate_texts
+from translator_api import translate_texts, translate_text
 import traceback
 
 
@@ -309,7 +309,7 @@ def novel_text(work_id: int, page_index: int, require_trans: int):
             page_info = {"text": translated["dst"], "page_amount": page_amount}
         elif require_trans == 2:
             try:
-                result = gemini_translate_text(origin_text)
+                result = translate_text(origin_text)
             except:
                 print("Gemini failed to translate text.", traceback.format_exc())
                 db_session.close()
@@ -345,7 +345,7 @@ def translate_single_title(title: str, require_trans: int):
                 return {"src_lang": "zh", "dst": "标题翻译失败"}
         elif require_trans == 2:
             try:
-                result = gemini_translate_text(title)
+                result = translate_text(title)
             except:
                 db_session.close()
                 print(f"Gemini failed to translate text.", traceback.format_exc())
@@ -378,7 +378,7 @@ def gemini_translate_titles(titles: list[str]):
             translation_map[title_md5] = data["dst"]
     if len(require_trans) > 0:
         try:
-            results = gemini_translate_texts(require_trans)
+            results = translate_texts(require_trans)
         except:
             results = [{"source_language": "", "translated_text": "标题翻译失败"} for _ in range(len(require_trans))]
     else:

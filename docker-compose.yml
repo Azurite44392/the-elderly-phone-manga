@@ -13,7 +13,10 @@ services:
       PIXIV_EXPIRE_IN: ""
       BAIDU_TRANSLATE_APPID: ""
       BAIDU_TRANSLATE_SECRET: ""
+      AI_TRANSLATOR: ""
       GEMINI_API_KEY: ""
+      CF_ACCOUNT_ID: ""
+      CF_API_TOKEN: ""
     depends_on:
       - redis
     volumes:

@@ -48,10 +48,8 @@
 ## 快速部署
 ### 服务器要求
 1. 服务器需要在中国大陆以外，以便访问 Pixiv API
-2. 服务器需要在能够访问 Gemini API 的区域，这样 AI 翻译才能正常工作  
-   [Gemini 支持的区域](https://ai.google.dev/gemini-api/docs/available-regions?hl=zh-cn)
-3. 服务器需要是 **Linux** 系统，因为本项目使用了一些仅能在 Linux 上运行的 Python 库
-4. 服务器需要安装了 Docker
+2. 服务器需要是 **Linux** 系统，因为本项目使用了一些仅能在 Linux 上运行的 Python 库
+3. 服务器需要安装了 Docker
 ### 步骤
 #### 一、获取 Pixiv API 密钥
 1. 从仓库里下载`pixiv_auth.py`到你的电脑
@@ -78,14 +76,27 @@
 #### 二、申请百度翻译开发者账户
 1. 到[百度翻译开放平台](https://fanyi-api.baidu.com/manage/developer)认证成为个人开发者
 2. 申请成功后，你应该可以在“开发者信息”-“申请信息”看到`APP ID`和`密钥`(不是“API Key”, 是“开发者信息”里面的)。请把他们复制粘贴到一个安全的地方备用。
-#### 三、创建 Gemini API 密钥
+#### 三、创建 AI 翻译密钥
+你可以选择使用 Gemini 或者 Cloudflare Workers AI 进行翻译，二者选其一即可。
+##### 选择使用 Gemini
+要使用 Gemini，你的服务器需要在能够访问 Gemini API 的区域，这样 AI 翻译才能正常工作  
+   [Gemini 支持的区域](https://ai.google.dev/gemini-api/docs/available-regions?hl=zh-cn)
 1. 到[AI Studio](https://aistudio.google.com/api-keys)创建一个 API 密钥，把它放在一个安全的位置备用。
+##### 选择使用 Cloudflare Workers AI
+1. 到[Cloudflare 控制面板](https://dash.cloudflare.com/)登录你的Cloudflare账户
+2. 在左侧的菜单中，找到“构建”-“AI”-“Workers AI”并进入(如果你实在找不到，也可以按`Ctrl+K`然后直接搜索`Workers AI`)
+3. 点击右上角的“REST API”
+4. 在“获取帐户 ID”那里复制你的账户 ID，并把它放在一个安全的位置保留备用
+5. 点击“创建 Workers AI API 令牌”
+6. 在右侧弹出的侧边栏中给你的令牌起一个好名字，然后点击右下角的“创建 API 令牌”
+7. 创建成功后，复制你的 API 令牌并把它放在一个安全的位置保留备用
 #### 四、部署 Docker 容器
 1. 下载仓库中的`docker-compose.yml`文件，这是一个最简的容器配置文件，可以让你最快地部署本项目。
 2. 用文本编辑器打开`docker-compose.yml`
 3. 把前面得到的 Pixiv `access_token`、`refresh_token`和`expires_in`依次填入`PIXIV_ACCESS_TOKEN`、`PIXIV_REFRESH_TOKEN`和`PIXIV_EXPIRE_IN`后面的双引号里
 4. 把前面得到的百度翻译`APP ID`和`密钥`依次填入`BAIDU_TRANSLATE_APPID`和`BAIDU_TRANSLATE_SECRET`后面的双引号里
-5. 把前面得到的 Gemini API 密钥填入`GEMINI_API_KEY`后面的双引号里
+5. 如果你想使用 Gemini AI 翻译，请把`gemini`填入`AI_TRANSLATOR`后面的双引号里，然后把前面得到的 Gemini API 密钥填入`GEMINI_API_KEY`后面的双引号里；  
+    如果你想使用 Cloudflare Workers AI，请把`cloudflare`填入`AI_TRANSLATOR`后面的双引号里，然后把前面得到的账户 ID 和 API 令牌依次填入`CF_ACCOUNT_ID`和`CF_API_TOKEN`后面的双引号里。
 6. 保存并退出文本编辑器
 7. 在服务器上创建一个空的目录
 8. 把`docker-compose.yml`上传到该目录
@@ -105,30 +116,34 @@
 ### 其他环境变量
 除了`docker-compose.yml`里面列出的环境变量外，还有其他可选的环境变量。完整环境变量设置如下表。
 
-| 环境变量名称                          | 描述                                                                            | 默认值(双引号代表空) |
-|---------------------------------|-------------------------------------------------------------------------------|-------------|
-| GUNICORN_WORKERS                | 用于处理请求的进程数，数值越大并发越高，但是占用内存也越高                                                 | 2           |
-| GUNICORN_KEEPALIVE              | HTTP 长连接保持时间，建议保持默认                                                           | 15          |
-| GUNICORN_TIMEOUT                | 每个请求最长处理时间，建议保持默认                                                             | 30          |
-| GUNICORN_MAX_REQUESTS           | 单个进程处理多少请求后自动重启，建议保持默认                                                        | 2000        |
-| GUNICORN_MAX_REQUESTS_JITTER    | 给`max_requests`加随机抖动，避免所有进程同时重启，建议保持默认                                        | 200         |
-| ***GUNICORN_REAL_IP_HEADER***   | ***(重要)*** 如果你使用反向代理，请把这个字段设为存放客户端 IP 的请求头名称，比如`X-Forward-For`。如果不使用反向代理，请留空。 | ""          |
-| EPM_WINDOW_WIDTH                | 图片查看器中图片的宽度。根据老人机的屏幕分辨率设置，尽量和屏幕宽度像素相等。                                        | 240         |
-| EPM_WINDOW_HEIGHT               | 图片查看器中图片的高度。根据老人机的屏幕分辨率设置，尽量比屏幕高度小一些。                                         | 240         |
-| EPM_SEARCH_PAGE_AMOUNT_PER_PAGE | 搜索页面中每一页对应 Pixiv 上的多少页。太大会导致搜索时响应时间过长，太小会导致搜索页面结果太少，要频繁翻页。建议保持默认。             | 5           |
-| REDIS_HOST                      | Redis 实例 IP 地址，如果你不使用`docker-compose.yml`一起部署 Redis，要使用外部 Redis 实例，则需要设置。     | 127.0.0.1   |
-| REDIS_PORT                      | Redis 实例端口。同上。                                                                | 6379        |
-| REDIS_PASSWORD                  | Redis 登录用户名。同上。                                                               | ""          |
-| REDIS_USERNAME                  | Redis 登录密码。同上。                                                                | ""          |
-| PIXIV_ACCESS_TOKEN              | 略。                                                                            | ""          |
-| PIXIV_REFRESH_TOKEN             | 略。                                                                            | ""          |
-| PIXIV_EXPIRE_IN                 | 略。                                                                            | 3600        |
-| PIXIV_WEB_COOKIES               | 使用 Pixiv 网页端搜索 API 时需要的 Cookie，但目前测试发现不用 Cookie 也可以，所以留空即可。                   | ""          |
-| PIXIV_WEB_UID                   | 同上，留空即可。                                                                      | ""          |
-| PIXIV_SENTRY_TRACE              | 同上，留空即可。                                                                      | ""          |
-| BAIDU_TRANSLATE_APPID           | 略。                                                                            | ""          |
-| BAIDU_TRANSLATE_SECRET          | 略。                                                                            | ""          |
-| GEMINI_API_KEY                  | 略。                                                                            | ""          |
+| 环境变量名称                          | 描述                                                                                                         | 默认值(双引号代表空)                         |
+|---------------------------------|------------------------------------------------------------------------------------------------------------|-------------------------------------|
+| GUNICORN_WORKERS                | 用于处理请求的进程数，数值越大并发越高，但是占用内存也越高                                                                              | 2                                   |
+| GUNICORN_KEEPALIVE              | HTTP 长连接保持时间，建议保持默认                                                                                        | 15                                  |
+| GUNICORN_TIMEOUT                | 每个请求最长处理时间，建议保持默认                                                                                          | 30                                  |
+| GUNICORN_MAX_REQUESTS           | 单个进程处理多少请求后自动重启，建议保持默认                                                                                     | 2000                                |
+| GUNICORN_MAX_REQUESTS_JITTER    | 给`max_requests`加随机抖动，避免所有进程同时重启，建议保持默认                                                                     | 200                                 |
+| ***GUNICORN_REAL_IP_HEADER***   | ***(重要)*** 如果你使用反向代理，请把这个字段设为存放客户端 IP 的请求头名称，比如`X-Forward-For`。如果不使用反向代理，请留空。                              | ""                                  |
+| EPM_WINDOW_WIDTH                | 图片查看器中图片的宽度。根据老人机的屏幕分辨率设置，尽量和屏幕宽度像素相等。                                                                     | 240                                 |
+| EPM_WINDOW_HEIGHT               | 图片查看器中图片的高度。根据老人机的屏幕分辨率设置，尽量比屏幕高度小一些。                                                                      | 240                                 |
+| EPM_SEARCH_PAGE_AMOUNT_PER_PAGE | 搜索页面中每一页对应 Pixiv 上的多少页。太大会导致搜索时响应时间过长，太小会导致搜索页面结果太少，要频繁翻页。建议保持默认。                                          | 5                                   |
+| REDIS_HOST                      | Redis 实例 IP 地址，如果你不使用`docker-compose.yml`一起部署 Redis，要使用外部 Redis 实例，则需要设置。                                  | 127.0.0.1                           |
+| REDIS_PORT                      | Redis 实例端口。同上。                                                                                             | 6379                                |
+| REDIS_PASSWORD                  | Redis 登录用户名。同上。                                                                                            | ""                                  |
+| REDIS_USERNAME                  | Redis 登录密码。同上。                                                                                             | ""                                  |
+| PIXIV_ACCESS_TOKEN              | 略。                                                                                                         | ""                                  |
+| PIXIV_REFRESH_TOKEN             | 略。                                                                                                         | ""                                  |
+| PIXIV_EXPIRE_IN                 | 略。                                                                                                         | 3600                                |
+| PIXIV_WEB_COOKIES               | 使用 Pixiv 网页端搜索 API 时需要的 Cookie，但目前测试发现不用 Cookie 也可以，所以留空即可。                                                | ""                                  |
+| PIXIV_WEB_UID                   | 同上，留空即可。                                                                                                   | ""                                  |
+| PIXIV_SENTRY_TRACE              | 同上，留空即可。                                                                                                   | ""                                  |
+| BAIDU_TRANSLATE_APPID           | 略。                                                                                                         | ""                                  |
+| BAIDU_TRANSLATE_SECRET          | 略。                                                                                                         | ""                                  |
+| AI_TRANSLATOR                   | 要使用哪个 AI 翻译服务，只能填`gemini`(使用 Gemini)或者`cloudflare`(使用 Cloudflare Workers AI)                               | "gemini"                            |
+| GEMINI_API_KEY                  | 略。                                                                                                         | ""                                  |
+| CF_ACCOUNT_ID                   | 略                                                                                                          | ""                                  |
+| CF_API_TOKEN                    | 略                                                                                                          | ""                                  |
+| CF_MODEL                        | 如果使用 Cloudflare Workers AI，要使用哪个 AI 模型进行翻译。[所有可用的模型](https://developers.cloudflare.com/workers-ai/models/) | @cf/qwen/qwen2.5-coder-32b-instruct |
 ### 日志
 下表显示了日志在`epm`容器中的位置。`docker-compose.yml`中已默认把他们映射到`epm_log`数据卷。
 

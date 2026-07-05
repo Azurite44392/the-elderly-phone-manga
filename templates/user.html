@@ -24,7 +24,7 @@
         {% else %}
         <span>小说</span>
         {% endif %}
-        <br><span>翻译标题(基于Gemini AI,较慢,可能失效):</span>
+        <br><span>翻译标题(基于AI,较慢,可能失效):</span>
         {% if translate_title != 1 %}
         <a href="/user/{{ uid }}?t={{ works_type }}&n={{ page_number }}&tt=1&r={{ redirect_to }}">翻译</a>
         {% else %}
