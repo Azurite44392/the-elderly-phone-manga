@@ -9,9 +9,10 @@ import json
 from image_cutter import get_image_size, resize_to_max_size_and_compress
 import hashlib
 from math import ceil
-from baidu_translate_api import translate_image, translate_text
+import baidu_translate_api
 from translator_api import translate_texts, translate_text
 import traceback
+import sys
 
 
 web_req_headers = {"Accept": "application/json",
@@ -117,7 +118,7 @@ def download_illust(illust_id: int, page_index: int, require_trans: int):
         return image_bytes
     origin_image = _download_illust(illust_id, page_index)
     origin_image = resize_to_max_size_and_compress(origin_image, 4096, 95)
-    result, errcode, data = translate_image("auto", "zh", origin_image, "jpg")
+    result, errcode, data = baidu_translate_api.translate_image("auto", "zh", origin_image, "jpg")
     if not result:
         print(f"Failed to translate image. error code: {errcode}")
         return None
@@ -301,9 +302,13 @@ def novel_text(work_id: int, page_index: int, require_trans: int):
     if data is None:
         origin_text, page_amount = _novel_text(work_id, page_index)
         if require_trans == 1:
-            result, errcode, translated = translate_text("auto", "zh", origin_text)
+            try:
+                result, errcode, translated = baidu_translate_api.translate_text("auto", "zh", origin_text)
+            except:
+                print(f"无法使用百度翻译来翻译小说文本:{traceback.format_exc()}", file=sys.stderr)
+                return "错误:无法翻译文本", 1
             if not result:
-                print(f"Failed to translate text. error code:{errcode}")
+                print(f"无法使用百度翻译来翻译小说文本，错误代码:{errcode}", file=sys.stderr)
                 db_session.close()
                 return "错误:无法翻译文本", 1
             page_info = {"text": translated["dst"], "page_amount": page_amount}
@@ -311,7 +316,7 @@ def novel_text(work_id: int, page_index: int, require_trans: int):
             try:
                 result = translate_text(origin_text)
             except:
-                print("Gemini failed to translate text.", traceback.format_exc())
+                print(f"无法使用 AI 翻译小说文本{traceback.format_exc()}", file=sys.stderr)
                 db_session.close()
                 return "错误:无法翻译文本", 1
             page_info = {"text": result["translated_text"], "page_amount": page_amount}
@@ -338,17 +343,21 @@ def translate_single_title(title: str, require_trans: int):
     data = db_session.get(cache_key)
     if data is None:
         if require_trans == 1:
-            result, errcode, info = translate_text("auto", "zh", title)
+            try:
+                result, errcode, info = baidu_translate_api.translate_text("auto", "zh", title)
+            except:
+                print(f"无法使用百度翻译来翻译单个标题:{traceback.format_exc()}", file=sys.stderr)
+                return {"src_lang": "zh", "dst": "标题翻译失败"}
             if not result:
                 db_session.close()
-                print(f"Failed to translate text. error code:{errcode}")
+                print(f"无法使用百度翻译来翻译单个标题，错误码:{errcode}", file=sys.stderr)
                 return {"src_lang": "zh", "dst": "标题翻译失败"}
         elif require_trans == 2:
             try:
                 result = translate_text(title)
             except:
                 db_session.close()
-                print(f"Gemini failed to translate text.", traceback.format_exc())
+                print(f"无法使用 AI 翻译单个标题:{traceback.format_exc()}", file=sys.stderr)
                 return {"src_lang": "zh", "dst": "标题翻译失败"}
             info = {"src_lang": result.get("source_language"), "dst": result["translated_text"]}
         else:
@@ -380,6 +389,7 @@ def gemini_translate_titles(titles: list[str]):
         try:
             results = translate_texts(require_trans)
         except:
+            print(f"无法使用 AI 翻译多个标题:{traceback.format_exc()}", file=sys.stderr)
             results = [{"source_language": "", "translated_text": "标题翻译失败"} for _ in range(len(require_trans))]
     else:
         results = []
